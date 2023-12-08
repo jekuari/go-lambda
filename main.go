@@ -97,6 +97,8 @@ func uploadToS3(buf []byte) (*s3.PutObjectOutput, error) {
 		return nil, fmt.Errorf("failed to create AWS session: %v", err)
 	}
 
+	fmt.Println("Uploading to S3", awsSession)
+
 	s3Client := s3.New(awsSession)
 
 	// Upload the image to S3

@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"image"
 	"image/color"
@@ -11,9 +12,8 @@ import (
 	"os"
 
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 )
 
@@ -41,12 +41,18 @@ func HandleRequest(ctx context.Context, event ColorEvent) (string, error) {
 	}
 
 	// Upload the image to S3
-	err = uploadToS3(buf)
+	res, err := uploadToS3(buf)
 	if err != nil {
 		return "", err
 	}
 
-	return "Image successfully generated and uploaded to S3", nil
+	// convert res to json
+	encodedRes, err := json.Marshal(res)
+	if err != nil {
+		return "", err
+	}
+
+	return fmt.Sprint(encodedRes), nil
 }
 
 func parseHexColor(hex string) (color.RGBA, error) {
@@ -79,33 +85,24 @@ func encodePNG(buf *[]byte, img image.Image) error {
 	return nil
 }
 
-func uploadToS3(buf []byte) error {
-	credentials := credentials.NewEnvCredentials()
-	sess, err := session.NewSession(&aws.Config{
-		Credentials: credentials,
-		Region:      aws.String("us-east-1"),
-	})
-	if err != nil {
-		return fmt.Errorf("failed to create AWS session: %v", err)
-	}
-
+func uploadToS3(buf []byte) (*s3.PutObjectOutput, error) {
 	imgRead := bytes.NewReader(buf)
-
-	// Create an S3 client
-	s3Client := s3.New(sess)
+	cfg, _ := config.LoadDefaultConfig(context.TODO())
+	s3Client := s3.New(cfg)
 
 	// Upload the image to S3
-	_, err = s3Client.PutObject(&s3.PutObjectInput{
+	res, err := s3Client.PutObject(&s3.PutObjectInput{
 		Bucket:      aws.String("colors"),
 		Key:         aws.String("generated_image.png"),
 		Body:        aws.ReadSeekCloser(imgRead),
 		ContentType: aws.String("image/png"),
 	})
+
 	if err != nil {
-		return fmt.Errorf("failed to upload image to S3: %v", err)
+		return nil, fmt.Errorf("failed to upload image to S3: %v", err)
 	}
 
-	return nil
+	return res, nil
 }
 
 func main() {

@@ -99,7 +99,6 @@ func uploadToS3(buf []byte) error {
 		Bucket:      aws.String("colors"),
 		Key:         aws.String("generated_image.png"),
 		Body:        aws.ReadSeekCloser(imgRead),
-		ACL:         aws.String("public-read"), // Set appropriate ACL
 		ContentType: aws.String("image/png"),
 	})
 	if err != nil {

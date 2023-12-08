@@ -12,8 +12,8 @@ import (
 	"os"
 
 	"github.com/aws/aws-lambda-go/lambda"
-	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 )
 
@@ -87,8 +87,17 @@ func encodePNG(buf *[]byte, img image.Image) error {
 
 func uploadToS3(buf []byte) (*s3.PutObjectOutput, error) {
 	imgRead := bytes.NewReader(buf)
-	cfg, _ := config.LoadDefaultConfig(context.TODO())
-	s3Client := s3.New(cfg)
+	region := os.Getenv("AWS_REGION")
+
+	awsSession, err := session.NewSession(&aws.Config{
+		Region: aws.String(region)},
+	)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to create AWS session: %v", err)
+	}
+
+	s3Client := s3.New(awsSession)
 
 	// Upload the image to S3
 	res, err := s3Client.PutObject(&s3.PutObjectInput{

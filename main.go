@@ -88,6 +88,7 @@ func encodePNG(buf *[]byte, img image.Image) error {
 
 func uploadToS3(ctx *context.Context, buf []byte) (*s3.PutObjectOutput, error) {
 	cfg, err := config.LoadDefaultConfig(*ctx)
+	cfg.Region = "us-east-1"
 	if err != nil {
 		return nil, fmt.Errorf("failed to load AWS SDK config: %v", err)
 	}

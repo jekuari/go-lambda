@@ -21,7 +21,7 @@ type ColorEvent struct {
 
 func HandleRequest(ctx context.Context, event ColorEvent) (string, error) {
 	// Parse hex color to RGB
-	fmt.Println(event)
+	fmt.Println(event, ctx)
 	rgbColor, err := parseHexColor(event.Color)
 	if err != nil {
 		return "", err

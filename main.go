@@ -10,11 +10,11 @@ import (
 	"image/draw"
 	"image/png"
 	"os"
+	"time"
 
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/aws/aws-sdk-go/aws"
 )
 
 type ColorEvent struct {
@@ -89,24 +89,32 @@ func encodePNG(buf *[]byte, img image.Image) error {
 func uploadToS3(ctx *context.Context, buf []byte) (*s3.PutObjectOutput, error) {
 	cfg, err := config.LoadDefaultConfig(*ctx)
 	cfg.Region = "us-east-1"
+
 	if err != nil {
 		return nil, fmt.Errorf("failed to load AWS SDK config: %v", err)
 	}
-	imgRead := bytes.NewReader(buf)
-
-	s3Client := s3.NewFromConfig(cfg)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to create session: %v", err)
 	}
 
-	// Upload the image to S3
-	res, err := s3Client.PutObject(*ctx, &s3.PutObjectInput{
-		Bucket:      aws.String("colors"),
-		Key:         aws.String("generated_image.png"),
-		Body:        aws.ReadSeekCloser(imgRead),
-		ContentType: aws.String("image/png"),
+	client := s3.NewFromConfig(cfg, func(o *s3.Options) {
+		o.Region = "us-east-1"
 	})
+
+	bucketName := "color"
+	fileName := fmt.Sprintf("%s.png", time.Now().Format("2006-01-02-15-04-05-000000000"))
+	imageReader := bytes.NewReader(buf)
+
+	params := &s3.PutObjectInput{
+		Bucket: &bucketName,
+		Key:    &fileName,
+		Body:   imageReader,
+	}
+
+	res, err := client.PutObject(*ctx, params)
+
+	// Upload the image to S3
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to upload image to S3: %v", err)

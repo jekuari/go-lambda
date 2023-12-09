@@ -35,8 +35,9 @@ func HandleRequest(ctx context.Context, event ColorEvent) (string, error) {
 	fmt.Println("v1 img, ", img)
 
 	// Encode the image to PNG
-	var buf []byte
-	err = encodePNG(&buf, img)
+	var buf bytes.Buffer
+	err = png.Encode(&buf, img)
+
 	if err != nil {
 		return "", err
 	}
@@ -44,7 +45,7 @@ func HandleRequest(ctx context.Context, event ColorEvent) (string, error) {
 	fmt.Println("v2, ", buf)
 
 	// Upload the image to S3
-	res, err := uploadToS3(&ctx, buf)
+	res, err := uploadToS3(&ctx, buf.Bytes())
 	if err != nil {
 		return "", err
 	}
@@ -76,16 +77,6 @@ func CreateImage(rgbColor color.RGBA) image.Image {
 	draw.Draw(img, img.Bounds(), &image.Uniform{rgbColor}, image.Point{}, draw.Src)
 
 	return img
-}
-
-func encodePNG(buf *[]byte, img image.Image) error {
-	// Encode the image to PNG
-	err := png.Encode(bytes.NewBuffer(*buf), img)
-	if err != nil {
-		return fmt.Errorf("failed to encode image to PNG: %v", err)
-	}
-
-	return nil
 }
 
 func uploadToS3(ctx *context.Context, buf []byte) (*s3.PutObjectOutput, error) {

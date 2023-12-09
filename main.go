@@ -18,24 +18,23 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
 
-type Event struct {
-	Color string `json:"color"`
-}
-
 func HandleRequest(ctx context.Context, event map[string]interface{}) (string, error) {
 	// Parse hex color to RGB
 
 	fmt.Println(event["body"], ctx)
 	fmt.Printf("%v", reflect.TypeOf(event["body"]))
 
-	decoder := json.NewDecoder(strings.NewReader("{ \"color\": \"#ff0000\" }"))
-	var t Event
-	err := decoder.Decode(&t)
+	body := event["body"].(string)
+	decoder := json.NewDecoder(strings.NewReader(body))
+
+	decoded := make(map[string]string)
+	err := decoder.Decode(&decoded)
+
 	if err != nil {
 		panic(err)
 	}
 
-	rgbColor, err := parseHexColor(t.Color)
+	rgbColor, err := parseHexColor(decoded["color"])
 	if err != nil {
 		return "", err
 	}

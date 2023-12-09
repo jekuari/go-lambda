@@ -21,11 +21,11 @@ type Event struct {
 	Color string `json:"color"`
 }
 
-func HandleRequest(ctx context.Context, event map[string]string) (string, error) {
+func HandleRequest(ctx context.Context, event map[string]interface{}) (string, error) {
 	// Parse hex color to RGB
 
 	fmt.Println(event["body"], ctx)
-	decoder := json.NewDecoder(strings.NewReader(event["body"]))
+	decoder := json.NewDecoder(strings.NewReader("{ \"color\": \"#ff0000\" }"))
 	var t Event
 	err := decoder.Decode(&t)
 	if err != nil {

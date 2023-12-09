@@ -25,7 +25,7 @@ func HandleRequest(ctx context.Context, event map[string]interface{}) (string, e
 	// Parse hex color to RGB
 	println("event", event)
 	fmt.Println(event, ctx)
-	rgbColor, err := parseHexColor(event["Body"].(map[string]interface{})["color"].(string))
+	rgbColor, err := parseHexColor(event["body"].(map[string]interface{})["color"].(string))
 	if err != nil {
 		return "", err
 	}

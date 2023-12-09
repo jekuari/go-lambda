@@ -23,6 +23,8 @@ type Event struct {
 
 func HandleRequest(ctx context.Context, event map[string]string) (string, error) {
 	// Parse hex color to RGB
+
+	fmt.Println(event["body"], ctx)
 	decoder := json.NewDecoder(strings.NewReader(event["body"]))
 	var t Event
 	err := decoder.Decode(&t)
@@ -30,7 +32,6 @@ func HandleRequest(ctx context.Context, event map[string]string) (string, error)
 		panic(err)
 	}
 
-	fmt.Println(event, ctx)
 	rgbColor, err := parseHexColor(t.Color)
 	if err != nil {
 		return "", err

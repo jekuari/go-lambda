@@ -15,14 +15,10 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
 
-type ColorEvent struct {
-	Color string `json:"color"`
-}
-
-func HandleRequest(ctx context.Context, event ColorEvent) (string, error) {
+func HandleRequest(ctx context.Context, event map[string]interface{}) (string, error) {
 	// Parse hex color to RGB
 	fmt.Println(event, ctx)
-	rgbColor, err := parseHexColor(event.Color)
+	rgbColor, err := parseHexColor(event["Color"].(string))
 	if err != nil {
 		return "", err
 	}

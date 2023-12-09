@@ -9,6 +9,7 @@ import (
 	"image/color"
 	"image/draw"
 	"image/png"
+	"reflect"
 	"strings"
 	"time"
 
@@ -25,6 +26,8 @@ func HandleRequest(ctx context.Context, event map[string]interface{}) (string, e
 	// Parse hex color to RGB
 
 	fmt.Println(event["body"], ctx)
+	fmt.Printf("%v", reflect.TypeOf(event["body"]))
+
 	decoder := json.NewDecoder(strings.NewReader("{ \"color\": \"#ff0000\" }"))
 	var t Event
 	err := decoder.Decode(&t)

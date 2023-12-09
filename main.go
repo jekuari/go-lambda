@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"image"
 	"image/color"
@@ -32,8 +31,6 @@ func HandleRequest(ctx context.Context, event ColorEvent) (string, error) {
 	// Create a 32x32 image with the specified color
 	img := CreateImage(rgbColor)
 
-	fmt.Println("v1 img, ", img)
-
 	// Encode the image to PNG
 	var buf bytes.Buffer
 	err = png.Encode(&buf, img)
@@ -42,21 +39,17 @@ func HandleRequest(ctx context.Context, event ColorEvent) (string, error) {
 		return "", err
 	}
 
-	fmt.Println("v2, ", buf)
-
 	// Upload the image to S3
-	res, err := uploadToS3(&ctx, buf.Bytes())
+	fileName, err := uploadToS3(&ctx, buf.Bytes())
 	if err != nil {
 		return "", err
 	}
 
 	// convert res to json
-	encodedRes, err := json.Marshal(res)
-	if err != nil {
-		return "", err
-	}
 
-	return string(encodedRes), nil
+	res := fmt.Sprintf("https://color.s3.amazonaws.com/%s", fileName)
+
+	return res, nil
 }
 
 func parseHexColor(hex string) (color.RGBA, error) {
@@ -79,16 +72,15 @@ func CreateImage(rgbColor color.RGBA) image.Image {
 	return img
 }
 
-func uploadToS3(ctx *context.Context, buf []byte) (*s3.PutObjectOutput, error) {
+func uploadToS3(ctx *context.Context, buf []byte) (string, error) {
 	cfg, err := config.LoadDefaultConfig(*ctx)
-	fmt.Println("v1")
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to load AWS SDK config: %v", err)
+		return "", fmt.Errorf("failed to load AWS SDK config: %v", err)
 	}
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to create session: %v", err)
+		return "", fmt.Errorf("failed to create session: %v", err)
 	}
 
 	client := s3.NewFromConfig(cfg, func(o *s3.Options) {
@@ -105,15 +97,15 @@ func uploadToS3(ctx *context.Context, buf []byte) (*s3.PutObjectOutput, error) {
 		Body:   imageReader,
 	}
 
-	res, err := client.PutObject(*ctx, params)
+	_, err := client.PutObject(*ctx, params)
 
 	// Upload the image to S3
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to upload image to S3: %v", err)
+		return "", fmt.Errorf("failed to upload image to S3: %v", err)
 	}
 
-	return res, nil
+	return fileName, nil
 }
 
 func main() {

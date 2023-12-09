@@ -41,6 +41,8 @@ func HandleRequest(ctx context.Context, event ColorEvent) (string, error) {
 		return "", err
 	}
 
+	fmt.Println("v2, ", buf)
+
 	// Upload the image to S3
 	res, err := uploadToS3(&ctx, buf)
 	if err != nil {

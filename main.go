@@ -12,9 +12,9 @@ import (
 	"os"
 
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3"
 )
 
 type ColorEvent struct {
@@ -41,7 +41,7 @@ func HandleRequest(ctx context.Context, event ColorEvent) (string, error) {
 	}
 
 	// Upload the image to S3
-	res, err := uploadToS3(buf)
+	res, err := uploadToS3(&ctx, buf)
 	if err != nil {
 		return "", err
 	}
@@ -85,24 +85,21 @@ func encodePNG(buf *[]byte, img image.Image) error {
 	return nil
 }
 
-func uploadToS3(buf []byte) (*s3.PutObjectOutput, error) {
+func uploadToS3(ctx *context.Context, buf []byte) (*s3.PutObjectOutput, error) {
+	cfg, err := config.LoadDefaultConfig(*ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load AWS SDK config: %v", err)
+	}
 	imgRead := bytes.NewReader(buf)
-	region := os.Getenv("AWS_REGION")
-
-	awsSession, err := session.NewSession(&aws.Config{
-		Region: aws.String(region)},
-	)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to create AWS session: %v", err)
 	}
 
-	fmt.Println("Uploading to S3", awsSession)
-
-	s3Client := s3.New(awsSession)
+	s3Client := s3.NewFromConfig(cfg)
 
 	// Upload the image to S3
-	res, err := s3Client.PutObject(&s3.PutObjectInput{
+	res, err := s3Client.PutObject(*ctx, &s3.PutObjectInput{
 		Bucket:      aws.String("colors"),
 		Key:         aws.String("generated_image.png"),
 		Body:        aws.ReadSeekCloser(imgRead),

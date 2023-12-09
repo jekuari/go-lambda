@@ -94,15 +94,7 @@ func uploadToS3(ctx *context.Context, buf []byte) (*s3.PutObjectOutput, error) {
 	}
 	imgRead := bytes.NewReader(buf)
 
-	if err != nil {
-		return nil, fmt.Errorf("failed to create AWS session: %v", err)
-	}
-
 	s3Client := s3.NewFromConfig(cfg)
-
-	_, err = s3Client.CreateSession(*ctx, &s3.CreateSessionInput{
-		Bucket: aws.String("colors"),
-	})
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to create session: %v", err)

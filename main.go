@@ -18,7 +18,16 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
 
-func HandleRequest(ctx context.Context, event map[string]interface{}) (string, error) {
+type APIGWResponse struct {
+	IsBase64Encoded bool              `json:"isBase64Encoded"`
+	StatusCode      int               `json:"statusCode"`
+	Headers         map[string]string `json:"headers"`
+	Body            string            `json:"body"`
+}
+
+var empty APIGWResponse
+
+func HandleRequest(ctx context.Context, event map[string]interface{}) (APIGWResponse, error) {
 	// Parse hex color to RGB
 
 	fmt.Println(event["body"], ctx)
@@ -36,7 +45,7 @@ func HandleRequest(ctx context.Context, event map[string]interface{}) (string, e
 
 	rgbColor, err := parseHexColor(decoded["color"])
 	if err != nil {
-		return "", err
+		return empty, err
 	}
 
 	// Create a 32x32 image with the specified color
@@ -47,20 +56,29 @@ func HandleRequest(ctx context.Context, event map[string]interface{}) (string, e
 	err = png.Encode(&buf, img)
 
 	if err != nil {
-		return "", err
+		return empty, err
 	}
 
 	// Upload the image to S3
 	fileName, err := uploadToS3(&ctx, buf.Bytes())
 	if err != nil {
-		return "", err
+		return empty, err
 	}
 
 	// convert res to json
 
 	res := fmt.Sprintf("https://color.s3.amazonaws.com/%s", fileName)
 
-	return res, nil
+	finalRes := APIGWResponse{
+		IsBase64Encoded: false,
+		StatusCode:      200,
+		Headers: map[string]string{
+			"Content-Type": "text/plain",
+		},
+		Body: res,
+	}
+
+	return finalRes, nil
 }
 
 func parseHexColor(hex string) (color.RGBA, error) {

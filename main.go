@@ -56,7 +56,7 @@ func HandleRequest(ctx context.Context, event ColorEvent) (string, error) {
 		return "", err
 	}
 
-	return fmt.Sprint(encodedRes), nil
+	return string(encodedRes), nil
 }
 
 func parseHexColor(hex string) (color.RGBA, error) {

@@ -9,7 +9,6 @@ import (
 	"image/color"
 	"image/draw"
 	"image/png"
-	"os"
 	"time"
 
 	"github.com/aws/aws-lambda-go/lambda"
@@ -25,14 +24,15 @@ type ColorEvent struct {
 
 func HandleRequest(ctx context.Context, event ColorEvent) (string, error) {
 	// Parse hex color to RGB
-	fmt.Println(ctx, event)
 	rgbColor, err := parseHexColor(event.Color.Hex)
 	if err != nil {
 		return "", err
 	}
 
 	// Create a 32x32 image with the specified color
-	img := createImage(rgbColor)
+	img := CreateImage(rgbColor)
+
+	fmt.Println("v1 img, ", img)
 
 	// Encode the image to PNG
 	var buf []byte
@@ -70,7 +70,7 @@ func parseHexColor(hex string) (color.RGBA, error) {
 	return rgbColor, nil
 }
 
-func createImage(rgbColor color.RGBA) image.Image {
+func CreateImage(rgbColor color.RGBA) image.Image {
 	// Create a 32x32 image with the specified color
 	img := image.NewRGBA(image.Rect(0, 0, 32, 32))
 	draw.Draw(img, img.Bounds(), &image.Uniform{rgbColor}, image.Point{}, draw.Src)
@@ -80,7 +80,7 @@ func createImage(rgbColor color.RGBA) image.Image {
 
 func encodePNG(buf *[]byte, img image.Image) error {
 	// Encode the image to PNG
-	err := png.Encode(os.Stdout, img)
+	err := png.Encode(bytes.NewBuffer(*buf), img)
 	if err != nil {
 		return fmt.Errorf("failed to encode image to PNG: %v", err)
 	}

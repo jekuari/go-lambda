@@ -3,11 +3,13 @@ package main
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"image"
 	"image/color"
 	"image/draw"
 	"image/png"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-lambda-go/lambda"
@@ -16,16 +18,20 @@ import (
 )
 
 type Event struct {
-	Body struct {
-		Color string `json:"color"`
-	} `json:"body"`
+	Color string `json:"color"`
 }
 
-func HandleRequest(ctx context.Context, event map[string]interface{}) (string, error) {
+func HandleRequest(ctx context.Context, event map[string]string) (string, error) {
 	// Parse hex color to RGB
-	println("event", event)
+	decoder := json.NewDecoder(strings.NewReader(event["body"]))
+	var t Event
+	err := decoder.Decode(&t)
+	if err != nil {
+		panic(err)
+	}
+
 	fmt.Println(event, ctx)
-	rgbColor, err := parseHexColor(event["body"].(map[string]interface{})["color"].(string))
+	rgbColor, err := parseHexColor(t.Color)
 	if err != nil {
 		return "", err
 	}

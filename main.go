@@ -16,14 +16,12 @@ import (
 )
 
 type ColorEvent struct {
-	Color struct {
-		Hex string `json:"hex"`
-	} `json:"color"`
+	Color string `json:"color"`
 }
 
 func HandleRequest(ctx context.Context, event ColorEvent) (string, error) {
 	// Parse hex color to RGB
-	rgbColor, err := parseHexColor(event.Color.Hex)
+	rgbColor, err := parseHexColor(event.Color)
 	if err != nil {
 		return "", err
 	}
@@ -97,7 +95,7 @@ func uploadToS3(ctx *context.Context, buf []byte) (string, error) {
 		Body:   imageReader,
 	}
 
-	_, err := client.PutObject(*ctx, params)
+	_, err = client.PutObject(*ctx, params)
 
 	// Upload the image to S3
 
